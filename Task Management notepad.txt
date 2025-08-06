@@ -1,0 +1,260 @@
+import tkinter as tk
+from tkinter import messagebox
+
+class Task:
+    def __init__(self, title, description, priority, assigned_to, due_date):
+        self.title = title
+        self.description = description
+        self.priority = priority
+        self.assigned_to = assigned_to
+        self.completed = False
+        self.due_date = due_date
+
+class TaskManagementSystemGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Task Management System")
+
+        self.task_list = []
+        self.subject_homeworks = {
+            "Linear Algebra": ["Matrix Operations"],
+            "Computer Science Fundamentals": ["Implement Binary Search"],
+            "Statistics": ["Perform Hypothesis"],
+            "Computer Communication": ["Configure Network"],
+            "Physics": ["Kinematic problems"]
+        }
+        self.exam_schedule = {
+            "Msc.Florenc Hidri": "19.06.2023 (09-11)",
+            "Dr. Maruf Ali": "21.06.2023 (09-11)",
+            "Msc. Ibrahim Cekiri": "23.06.2023 (09-11)",
+            "Prof.Assoc.Dr. Vaso Qano": "26.06.2023 (09-11)"
+        }
+
+        self.title_label = tk.Label(root, text="Title:")
+        self.title_label.pack()
+        self.title_entry = tk.Entry(root)
+        self.title_entry.pack()
+
+        self.description_label = tk.Label(root, text="Description:")
+        self.description_label.pack()
+        self.description_entry = tk.Entry(root)
+        self.description_entry.pack()
+
+        self.priority_label = tk.Label(root, text="Priority:")
+        self.priority_label.pack()
+        self.priority_entry = tk.Entry(root)
+        self.priority_entry.pack()
+
+        self.assigned_to_label = tk.Label(root, text="Assigned To:")
+        self.assigned_to_label.pack()
+        self.assigned_to_entry = tk.Entry(root)
+        self.assigned_to_entry.pack()
+
+        self.due_date_label = tk.Label(root, text="Due Date (dd.mm.yyyy):")
+        self.due_date_label.pack()
+        self.due_date_entry = tk.Entry(root)
+        self.due_date_entry.pack()
+
+        self.add_button = tk.Button(root, text="Add Task", command=self.add_task)
+        self.add_button.pack()
+
+        self.task_listbox = tk.Listbox(root)
+        self.task_listbox.pack()
+
+        self.complete_button = tk.Button(root, text="Mark Complete", command=self.mark_complete)
+        self.complete_button.pack()
+
+        self.show_incomplete_button = tk.Button(root, text="Show Incomplete", command=self.show_incomplete)
+        self.show_incomplete_button.pack()
+
+        self.show_subjects_button = tk.Button(root, text="Show Subjects", command=self.show_subjects)
+        self.show_subjects_button.pack()
+
+        self.show_notifications_button = tk.Button(root, text="Show Notifications", command=self.show_notifications)
+        self.show_notifications_button.pack()
+
+        self.edit_button = tk.Button(root, text="Edit Task", command=self.edit_task)
+        self.edit_button.pack()
+
+        self.delete_button = tk.Button(root, text="Delete Task", command=self.delete_task)
+        self.delete_button.pack()
+
+        self.search_button = tk.Button(root, text="Search Task", command=self.search_task)
+        self.search_button.pack()
+
+        self.task_delay_button = tk.Button(root, text="Task Delay", command=self.show_task_delay)
+        self.task_delay_button.pack()
+
+        self.show_exams_button = tk.Button(root, text="Show Exams", command=self.show_exams)
+        self.show_exams_button.pack()
+
+        self.selected_task_index = None
+
+    def add_task(self):
+        title = self.title_entry.get()
+        description = self.description_entry.get()
+        priority = int(self.priority_entry.get())
+        assigned_to = self.assigned_to_entry.get()
+        due_date = self.due_date_entry.get()
+
+        task = Task(title, description, priority, assigned_to, due_date)
+        self.task_list.append(task)
+
+        self.task_listbox.insert(tk.END, f"{task.title} - {task.description}")
+
+        self.title_entry.delete(0, tk.END)
+        self.description_entry.delete(0, tk.END)
+        self.priority_entry.delete(0, tk.END)
+        self.assigned_to_entry.delete(0, tk.END)
+        self.due_date_entry.delete(0, tk.END)
+
+        messagebox.showinfo("Success", "Task added successfully!")
+
+    def mark_complete(self):
+        selection = self.task_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Error", "No task selected.")
+            return
+
+        task_index = selection[0]
+        task = self.task_list[task_index]
+        task.completed = True
+
+        self.task_listbox.delete(task_index)
+        self.task_listbox.insert(tk.END, f"{task.title} - {task.description} (Completed)")
+
+        messagebox.showinfo("Success", "Task marked as complete!")
+
+    def show_incomplete(self):
+        self.task_listbox.delete(0, tk.END)
+
+        for task in self.task_list:
+            if not task.completed:
+                self.task_listbox.insert(tk.END, f"{task.title} - {task.description}")
+
+    def show_subjects(self):
+        subjects = list(self.subject_homeworks.keys())
+
+        messagebox.showinfo("Subjects", "\n".join(subjects))
+
+    def show_notifications(self):
+        notifications = []
+        for subject, homeworks in self.subject_homeworks.items():
+            incomplete_homeworks = [hw for hw in homeworks if not self.is_homework_completed(hw)]
+            if incomplete_homeworks:
+                notifications.append(f"{subject}: {len(incomplete_homeworks)} pending tasks")
+
+        if notifications:
+            messagebox.showinfo("Task Notifications", "\n".join(notifications))
+        else:
+            messagebox.showinfo("Task Notifications", "No pending tasks")
+
+    def is_homework_completed(self, homework):
+        for task in self.task_list:
+            if task.description == homework and not task.completed:
+                return False
+        return True
+
+    def edit_task(self):
+        selection = self.task_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Error", "No task selected.")
+            return
+
+        self.selected_task_index = selection[0]
+        task = self.task_list[self.selected_task_index]
+
+        self.title_entry.delete(0, tk.END)
+        self.title_entry.insert(tk.END, task.title)
+
+        self.description_entry.delete(0, tk.END)
+        self.description_entry.insert(tk.END, task.description)
+
+        self.priority_entry.delete(0, tk.END)
+        self.priority_entry.insert(tk.END, task.priority)
+
+        self.assigned_to_entry.delete(0, tk.END)
+        self.assigned_to_entry.insert(tk.END, task.assigned_to)
+
+        self.add_button.configure(text="Save Changes", command=self.save_task_changes)
+
+    def save_task_changes(self):
+        if self.selected_task_index is None:
+            messagebox.showerror("Error", "No task selected.")
+            return
+
+        task = self.task_list[self.selected_task_index]
+
+        task.title = self.title_entry.get()
+        task.description = self.description_entry.get()
+        task.priority = int(self.priority_entry.get())
+        task.assigned_to = self.assigned_to_entry.get()
+
+        self.task_listbox.delete(self.selected_task_index)
+        self.task_listbox.insert(tk.END, f"{task.title} - {task.description}")
+
+        self.title_entry.delete(0, tk.END)
+        self.description_entry.delete(0, tk.END)
+        self.priority_entry.delete(0, tk.END)
+        self.assigned_to_entry.delete(0, tk.END)
+
+        self.selected_task_index = None
+        self.add_button.configure(text="Add Task", command=self.add_task)
+
+        messagebox.showinfo("Success", "Task changes saved successfully!")
+
+    def delete_task(self):
+        selection = self.task_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Error", "No task selected.")
+            return
+
+        task_index = selection[0]
+        del self.task_list[task_index]
+
+        self.task_listbox.delete(task_index)
+
+        messagebox.showinfo("Success", "Task deleted successfully!")
+
+    def search_task(self):
+        keyword = self.title_entry.get()
+        if not keyword:
+            messagebox.showerror("Error", "No keyword entered for search.")
+            return
+
+        search_results = []
+        for task in self.task_list:
+            if keyword.lower() in task.title.lower() or keyword.lower() in task.description.lower():
+                search_results.append(f"{task.title} - {task.description}")
+
+        if search_results:
+            messagebox.showinfo("Search Results", "\n".join(search_results))
+        else:
+            messagebox.showinfo("Search Results", "No matching tasks found.")
+
+    def show_task_delay(self):
+        selection = self.task_listbox.curselection()
+        if not selection:
+            messagebox.showerror("Error", "No task selected.")
+            return
+
+        task_index = selection[0]
+        task = self.task_list[task_index]
+
+        messagebox.showinfo("Task Delay", f"The task '{task.title}' is due on {task.due_date}.")
+
+    def show_exams(self):
+        exams = [
+            "Msc. Florenc Hidri - 19.06.2023 (09-11)",
+            "Dr. Maruf Ali - 21.06.2023 (09-11)",
+            "Msc. Ibrahim Cekiri - 23.06.2023 (09-11)",
+            "Prof.Assoc.Dr. Vaso Qano - 26.06.2023 (09-11)"
+        ]
+
+        messagebox.showinfo("Exams", "\n".join(exams))
+
+
+root = tk.Tk()
+app = TaskManagementSystemGUI(root)
+root.mainloop()
+
